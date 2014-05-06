@@ -1,0 +1,6 @@
+bin
+include
+*.pyc
+*.swp
+lib/python2.7
+.Python
