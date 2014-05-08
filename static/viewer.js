@@ -69,8 +69,9 @@ $(document).ready(function() {
     );
     map.addLayer(layer);
     layer.on('tileload', function(e) {
-        console.log(e.tile);
+        // console.log(e.tile);
         // should refer to _getTileSize to see if we need to scale
+        // also not old IE compatible
         $(e.tile).css('width',e.tile.naturalWidth + 'px');
         $(e.tile).css('height',e.tile.naturalHeight + 'px');
 
@@ -98,4 +99,37 @@ $(document).ready(function() {
     }
 
     map.on('click', onMapClick);
+
+    map.on('zoomstart', function() { console.log('zoom start'); });
+    map.on('zoomend', function() { console.log('zoom end'); });
+
+
+    var FabricLayer = L.CanvasLayer.extend({
+        render: function() {
+            var canvas = this.getCanvas();
+            if (this._animating) {
+                return;
+            }
+
+            var ctx = canvas.getContext('2d');
+            // render
+            //console.log('rendering');
+
+            var topleft = map.latLngToContainerPoint(new L.LatLng(0, 0));
+            var bottomright = map.latLngToContainerPoint(new L.LatLng(1, 1));
+            //console.log(topleft.x, topleft.y, bottomright.x, bottomright.y);
+
+            var scale = (bottomright.x - topleft.x) / width;
+            console.log(scale);
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.setTransform(scale, 0, 0, scale, topleft.x, topleft.y);
+
+            ctx.fillStyle='yellow';
+            ctx.fillRect(0, 0, 100000, 100000);
+        }
+    });
+    var layer = new FabricLayer();
+    layer.addTo(map);
 });

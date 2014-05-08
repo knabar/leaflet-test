@@ -1,0 +1,3 @@
+[submodule "static/Leaflet.CanvasLayer"]
+	path = static/Leaflet.CanvasLayer
+	url = https://github.com/CartoDB/Leaflet.CanvasLayer
