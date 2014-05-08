@@ -7,8 +7,9 @@
 var map;
 var layer;
 var bounds;
-var width = (3 * 256 + 132) * Math.pow(2, 10);
-var height = (256 + 116) * Math.pow(2, 10);
+var width = 921600;
+var height = 380928;
+
 $(document).ready(function() {
 
     L.Projection.NoWrap = {
@@ -24,11 +25,16 @@ $(document).ready(function() {
     };
 
     var ratio = width / height;
+    var zoomrange = 10;
+    // calculate correction in x and y direction, since image does not
+    // exactly fit in 256x256 tile
+    var xfactor = width / Math.pow(2, zoomrange) / 256;
+    xfactor = xfactor / Math.ceil(xfactor)
 
     L.CRS.Direct = L.Util.extend({}, L.CRS, {
             code: 'Direct',
             projection: L.Projection.NoWrap,
-            transformation: new L.Transformation(1, 0, 1/ratio, 0)
+            transformation: new L.Transformation(xfactor, 0, xfactor/ratio, 0)
     });
     
     // bounding box
@@ -75,6 +81,7 @@ $(document).ready(function() {
         map.getMaxZoom())).addTo(map);
     L.marker(map.unproject([512 * 1024, 256 * 1024], 
         map.getMaxZoom())).addTo(map);
+    L.marker(new L.LatLng(1, 1)).addTo(map);
     
     // add popup to get coordinates
     var popup = L.popup();
