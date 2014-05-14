@@ -1538,7 +1538,6 @@ fabric.Collection = {
   if (shouldUseAddListenerRemoveListener) {
     /** @ignore */
     addListener = function (element, eventName, handler) {
-        console.log('AEL called');
       element.addEventListener(eventName, handler, false);
     };
     /** @ignore */

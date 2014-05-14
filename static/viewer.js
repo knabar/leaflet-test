@@ -10,6 +10,8 @@ var bounds;
 var width = 921600;
 var height = 380928;
 
+var fabricCanvas;
+
 $(document).ready(function() {
 
     L.Projection.NoWrap = {
@@ -100,36 +102,37 @@ $(document).ready(function() {
 
     map.on('click', onMapClick);
 
-    map.on('zoomstart', function() { console.log('zoom start'); });
-    map.on('zoomend', function() { console.log('zoom end'); });
-
+    //map.on('zoomstart', function() { console.log('zoom start'); });
+    //map.on('zoomend', function() { console.log('zoom end'); });
 
     var FabricLayer = L.CanvasLayer.extend({
         render: function() {
-            var canvas = this.getCanvas();
             if (this._animating) {
+                console.log('animating, not rendering');
                 return;
             }
+            fabricCanvas = new fabric.Canvas(this.getCanvas().id);
 
-            var ctx = canvas.getContext('2d');
-            // render
-            //console.log('rendering');
+            var triangle = new fabric.Triangle({
+                  width: 20000, height: 30000, fill: 'blue', left: 500000, top: 50000
+            });
 
+            //var ctx = fabricCanvas.getContext();
             var topleft = map.latLngToContainerPoint(new L.LatLng(0, 0));
             var bottomright = map.latLngToContainerPoint(new L.LatLng(1, 1));
-            //console.log(topleft.x, topleft.y, bottomright.x, bottomright.y);
-
             var scale = (bottomright.x - topleft.x) / width;
-            console.log(scale);
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            ctx.setTransform(scale, 0, 0, scale, topleft.x, topleft.y);
-
-            ctx.fillStyle='yellow';
-            ctx.fillRect(0, 0, 100000, 100000);
+            //ctx.setTransform(scale, 0, 0, scale, topleft.x, topleft.y);
+            triangle.setTransformMatrix([scale, 0, 0, scale, topleft.x, topleft.y]); 
+            fabricCanvas.add(triangle);
+            //fabricCanvas.renderAll();
+            return;
         }
     });
     var layer = new FabricLayer();
     layer.addTo(map);
+
+    layer.getCanvas().id = 'fabric-canvas';
+
+    //$("canvas").css("pointer-events", "auto");
+    //$("#map").css("pointer-events", "none");
 });
