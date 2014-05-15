@@ -12,6 +12,9 @@ var height = 380928;
 
 var fabricCanvas;
 
+var drawControl;
+var ROIs;
+
 $(document).ready(function() {
 
     L.Projection.NoWrap = {
@@ -105,34 +108,78 @@ $(document).ready(function() {
     //map.on('zoomstart', function() { console.log('zoom start'); });
     //map.on('zoomend', function() { console.log('zoom end'); });
 
-    var FabricLayer = L.CanvasLayer.extend({
-        render: function() {
-            if (this._animating) {
-                console.log('animating, not rendering');
-                return;
-            }
-            fabricCanvas = new fabric.Canvas(this.getCanvas().id);
-
-            var triangle = new fabric.Triangle({
-                  width: 20000, height: 30000, fill: 'blue', left: 500000, top: 50000
-            });
-
-            //var ctx = fabricCanvas.getContext();
-            var topleft = map.latLngToContainerPoint(new L.LatLng(0, 0));
-            var bottomright = map.latLngToContainerPoint(new L.LatLng(1, 1));
-            var scale = (bottomright.x - topleft.x) / width;
-            //ctx.setTransform(scale, 0, 0, scale, topleft.x, topleft.y);
-            triangle.setTransformMatrix([scale, 0, 0, scale, topleft.x, topleft.y]); 
-            fabricCanvas.add(triangle);
-            //fabricCanvas.renderAll();
-            return;
-        }
-    });
-    var layer = new FabricLayer();
-    layer.addTo(map);
-
-    layer.getCanvas().id = 'fabric-canvas';
-
     //$("canvas").css("pointer-events", "auto");
     //$("#map").css("pointer-events", "none");
+
+    ROIs = {}; 
+
+    var initDrawing = function (items) {
+        if (!items) {
+            items = new L.FeatureGroup();
+            map.addLayer(items);
+        }
+
+        var drawControl = new L.Control.Draw({
+            edit: {
+                      featureGroup: items
+                  }
+        });
+        map.addControl(drawControl);
+
+        map.on('draw:created', function (e) {
+            var type = e.layerType,
+                layer = e.layer;
+            items.addLayer(layer);
+            var colors = ['red','green','blue'];
+            var color = colors[Math.floor(Math.random()*10000) % 3];
+            layer.setStyle({'color':color});
+            var id = L.Util.stamp(layer);
+            ROIs[id] = {
+                'type': type
+            };
+        });
+
+        return drawControl;
+    };
+
+
+    drawControl = initDrawing();
+
+    $("#list-shapes").on('click', function () {
+        var drawnItems = drawControl.options.edit.featureGroup;
+        drawnItems.eachLayer(function (layer) {
+            var id = L.Util.stamp(layer);
+            var type = ROIs[id]['type'];
+            if (type === 'rectangle' || type === 'polyline' || type === 'polygon')
+            {
+                ROIs[id]['latlngs'] = L.LatLngUtil.cloneLatLngs(layer.getLatLngs());
+            } else if (type === 'circle') {
+                ROIs[id]['latlng'] = L.LatLngUtil.cloneLatLng(layer.getLatLng());
+                ROIs[id]['radius'] = layer.getRadius();
+            } else if (type === 'marker') {
+                ROIs[id]['latlng'] = L.LatLngUtil.cloneLatLng(layer.getLatLng());
+            }
+        });
+        $("#shapes").text(JSON.stringify(ROIs));
+    });
+
+    $("#load-shapes").on('click', function () {
+        var json = $("#shapes").text();
+        map.removeLayer(drawControl.options.edit.featureGroup);
+        var shapes = JSON.parse(json);
+        var rois = [];
+        for (var id in shapes) {
+            var shape = shapes[id];
+            if (shape['type'] === 'rectangle') {
+                var points = shape['latlngs'];
+                var roi = L.rectangle([points[0], points[2]]);
+                rois.push(roi);
+            }
+        }
+        var drawnItems = L.featureGroup(rois);
+        drawnItems.addTo(map);
+        map.removeControl(drawControl);
+        drawControl = initDrawing(drawnItems);
+    });
+
 });
