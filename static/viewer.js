@@ -13,33 +13,43 @@ var height = 380928;
 var fabricCanvas;
 
 var drawControl;
-var ROIs;
 
-$(document).ready(function() {
 
-    L.Projection.NoWrap = {
-            project: function (latlng) {
-                var point = new L.Point(latlng.lng, latlng.lat);
-                  return point;
-            },
+L.Projection.NoWrap = {
+        project: function (latlng) {
+            return new L.Point(latlng.lng, latlng.lat);
+        },
+        unproject: function (point, unbounded) {
+            return new L.LatLng(point.y, point.x, unbounded);
+        }
+};
 
-            unproject: function (point, unbounded) {
-                    var latlng = new L.LatLng(point.y, point.x, unbounded);
-                    return latlng;
-            }
+
+var Viewer = {};
+
+Viewer.initialize = function (id, options) {
+    var defaults = {
+        width: null,
+        height: null,
+        tileSize: 256,
+        minZoom: 0,
+        maxZoom: 0,
+        zoomOffset: 0,
+        zoomReverse: false
     };
+    var opts = $.extend({}, defaults, options);
 
-    var ratio = width / height;
-    var zoomrange = 10;
+    var zoomrange = opts.maxZoom - opts.minZoom;
+    var ratio = opts.width / opts.height;
     // calculate correction in x and y direction, since image does not
     // exactly fit in 256x256 tile
-    var xfactor = width / Math.pow(2, zoomrange) / 256;
-    xfactor = xfactor / Math.ceil(xfactor)
+    var xfactor = opts.width / Math.pow(2, zoomrange) / opts.tileSize;
+    xfactor = xfactor / Math.ceil(xfactor);
 
     L.CRS.Direct = L.Util.extend({}, L.CRS, {
-            code: 'Direct',
-            projection: L.Projection.NoWrap,
-            transformation: new L.Transformation(xfactor, 0, xfactor/ratio, 0)
+        code: 'Direct',
+        projection: L.Projection.NoWrap,
+        transformation: new L.Transformation(xfactor, 0, xfactor / ratio, 0)
     });
     
     // bounding box
@@ -47,39 +57,50 @@ $(document).ready(function() {
     var sw = new L.LatLng(1, 0);
     bounds = new L.LatLngBounds(ne, sw);
     
-    map = L.map('map', {
-        maxZoom: 12, 
-        minZoom: 2,
-        tileSize: 256,
+    map = L.map(id, {
+        minZoom: opts.minZoom,
+        maxZoom: opts.maxZoom, 
+        tileSize: opts.tileSize,
         center: bounds.getCenter(),
-        zoom: 2,
+        zoom: opts.minZoom,
         crs: L.CRS.Direct
     });
 
-    layer = L.tileLayer(
-        'http://v.jcb-dataviewer.glencoesoftware.com/webclient/' +
-        'render_image_region/201/0/0/?c=1|0:255$FF0000&m=g&p=normal&ia=0&' +
-        'q=0.9&zm=100&x=0&y=0&tile={z},{x},{y},256,256',
-        {
-            attribution: 'fish',
-            maxZoom: 12,
-            minZoom: 2,
-            zoomOffset: 0,
-            zoomReverse: true,
-            continuousWorld: false,
-            noWrap: true,
-            tileSize: 256,
-            bounds: bounds
-        }
-    );
+    layer = L.tileLayer(opts.url, {
+        attribution: opts.attribution,
+        maxZoom: opts.maxZoom,
+        minZoom: opts.minZoom,
+        zoomOffset: opts.zoomOffset,
+        zoomReverse: opts.zoomReverse,
+        continuousWorld: false,
+        noWrap: true,
+        tileSize: opts.tileSize,
+        bounds: bounds
+    });
     map.addLayer(layer);
     layer.on('tileload', function(e) {
         // console.log(e.tile);
         // should refer to _getTileSize to see if we need to scale
         // also not old IE compatible
-        $(e.tile).css('width',e.tile.naturalWidth + 'px');
-        $(e.tile).css('height',e.tile.naturalHeight + 'px');
+        $(e.tile).css('width', e.tile.naturalWidth + 'px');
+        $(e.tile).css('height', e.tile.naturalHeight + 'px');
 
+    });
+    return map;
+};
+
+
+$(document).ready(function() {
+
+    map = Viewer.initialize('map', {
+        width: 921600,
+        height: 380928,
+        minZoom: 2,
+        maxZoom: 12,
+        zoomReverse: true,
+        url: 'http://v.jcb-dataviewer.glencoesoftware.com/webclient/' +
+        'render_image_region/201/0/0/?c=1|0:255$FF0000&m=g&p=normal&ia=0&' +
+        'q=0.9&zm=100&x=0&y=0&tile={z},{x},{y},256,256'
     });
 
     L.marker(map.unproject([0, 0], map.getMaxZoom())).addTo(map);
@@ -111,8 +132,6 @@ $(document).ready(function() {
     //$("canvas").css("pointer-events", "auto");
     //$("#map").css("pointer-events", "none");
 
-    ROIs = {}; 
-
     var initDrawing = function (items) {
         if (!items) {
             items = new L.FeatureGroup();
@@ -133,10 +152,6 @@ $(document).ready(function() {
             var colors = ['red','green','blue'];
             var color = colors[Math.floor(Math.random()*10000) % 3];
             layer.setStyle({'color':color});
-            var id = L.Util.stamp(layer);
-            ROIs[id] = {
-                'type': type
-            };
         });
 
         return drawControl;
@@ -147,23 +162,17 @@ $(document).ready(function() {
 
     $("#list-shapes").on('click', function () {
         var drawnItems = drawControl.options.edit.featureGroup;
+        var ROIs = [];
         drawnItems.eachLayer(function (layer) {
-            var id = L.Util.stamp(layer);
-            var type = ROIs[id]['type'];
-            if (type === 'rectangle' || type === 'polyline' || type === 'polygon')
-            {
-                ROIs[id]['latlngs'] = L.LatLngUtil.cloneLatLngs(layer.getLatLngs());
-            } else if (type === 'circle') {
-                ROIs[id]['latlng'] = L.LatLngUtil.cloneLatLng(layer.getLatLng());
-                ROIs[id]['radius'] = layer.getRadius();
-            } else if (type === 'marker') {
-                ROIs[id]['latlng'] = L.LatLngUtil.cloneLatLng(layer.getLatLng());
-            }
+            ROIs.push(layer.saveAsROI());
         });
         $("#shapes").text(JSON.stringify(ROIs));
     });
 
     $("#load-shapes").on('click', function () {
+        return;
+
+
         var json = $("#shapes").text();
         map.removeLayer(drawControl.options.edit.featureGroup);
         var shapes = JSON.parse(json);
