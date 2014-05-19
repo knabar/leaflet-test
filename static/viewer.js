@@ -126,69 +126,16 @@ $(document).ready(function() {
 
     map.on('click', onMapClick);
 
-    //map.on('zoomstart', function() { console.log('zoom start'); });
-    //map.on('zoomend', function() { console.log('zoom end'); });
-
-    //$("canvas").css("pointer-events", "auto");
-    //$("#map").css("pointer-events", "none");
-
-    var initDrawing = function (items) {
-        if (!items) {
-            items = new L.FeatureGroup();
-            map.addLayer(items);
-        }
-
-        var drawControl = new L.Control.Draw({
-            edit: {
-                      featureGroup: items
-                  }
-        });
-        map.addControl(drawControl);
-
-        map.on('draw:created', function (e) {
-            var type = e.layerType,
-                layer = e.layer;
-            items.addLayer(layer);
-            var colors = ['red','green','blue'];
-            var color = colors[Math.floor(Math.random()*10000) % 3];
-            layer.setStyle({'color':color});
-        });
-
-        return drawControl;
-    };
-
-
-    drawControl = initDrawing();
+    drawControl = new L.Control.Draw();
+    map.addControl(drawControl);
+    drawControl.initROI('[]');
 
     $("#list-shapes").on('click', function () {
-        var drawnItems = drawControl.options.edit.featureGroup;
-        var ROIs = [];
-        drawnItems.eachLayer(function (layer) {
-            ROIs.push(layer.saveAsROI());
-        });
-        $("#shapes").text(JSON.stringify(ROIs));
+        $("#shapes").text(drawControl.saveAsROI());
     });
 
     $("#load-shapes").on('click', function () {
+        drawControl.loadFromROI($("#shapes").text());
         return;
-
-
-        var json = $("#shapes").text();
-        map.removeLayer(drawControl.options.edit.featureGroup);
-        var shapes = JSON.parse(json);
-        var rois = [];
-        for (var id in shapes) {
-            var shape = shapes[id];
-            if (shape['type'] === 'rectangle') {
-                var points = shape['latlngs'];
-                var roi = L.rectangle([points[0], points[2]]);
-                rois.push(roi);
-            }
-        }
-        var drawnItems = L.featureGroup(rois);
-        drawnItems.addTo(map);
-        map.removeControl(drawControl);
-        drawControl = initDrawing(drawnItems);
     });
-
 });
