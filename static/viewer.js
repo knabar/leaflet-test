@@ -64,6 +64,10 @@ Viewer.initialize = function (id, options) {
         center: bounds.getCenter(),
         zoom: opts.minZoom,
         zoomControl: false,
+        fullscreenControl: true,
+        fullscreenControlOptions: {
+            position: 'topleft'
+        },
         crs: L.CRS.Direct
     });
     map.addControl(new L.Control.ZoomMin())
