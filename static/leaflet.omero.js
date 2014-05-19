@@ -149,6 +149,7 @@ L.Marker.include({
             map.addControl(this);
             var _this = this;
             on_draw_created = function (event) {
+                event.layer.bindLabel('Sample Text', { noHide: true });
                 _this.options.edit.featureGroup.addLayer(event.layer);
             };
             map.on('draw:created', on_draw_created);

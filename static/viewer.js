@@ -102,14 +102,7 @@ $(document).ready(function() {
         'render_image_region/201/0/0/?c=1|0:255$FF0000&m=g&p=normal&ia=0&' +
         'q=0.9&zm=100&x=0&y=0&tile={z},{x},{y},256,256'
     });
-
-    L.marker(map.unproject([0, 0], map.getMaxZoom())).addTo(map);
-    L.marker(map.unproject([256 * 1024, 256 * 1024],
-        map.getMaxZoom())).addTo(map);
-    L.marker(map.unproject([512 * 1024, 256 * 1024], 
-        map.getMaxZoom())).addTo(map);
-    L.marker(new L.LatLng(1, 1)).addTo(map);
-    
+    /* 
     // add popup to get coordinates
     var popup = L.popup();
 
@@ -125,7 +118,7 @@ $(document).ready(function() {
     }
 
     map.on('click', onMapClick);
-
+    */
     drawControl = new L.Control.Draw();
     map.addControl(drawControl);
     drawControl.initROI('[]');
