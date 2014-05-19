@@ -92,6 +92,18 @@ Viewer.initialize = function (id, options) {
         $(e.tile).css('height', e.tile.naturalHeight + 'px');
 
     });
+
+    var minilayer = L.tileLayer(opts.url, {
+        maxZoom: opts.maxZoom,
+        minZoom: opts.minZoom,
+        zoomOffset: opts.zoomOffset,
+        zoomReverse: opts.zoomReverse,
+        continuousWorld: false,
+        noWrap: true,
+        tileSize: opts.tileSize,
+        bounds: bounds
+    });
+    var miniMap = new L.Control.MiniMap(minilayer).addTo(map);
     return map;
 };
 
