@@ -63,8 +63,10 @@ Viewer.initialize = function (id, options) {
         tileSize: opts.tileSize,
         center: bounds.getCenter(),
         zoom: opts.minZoom,
+        zoomControl: false,
         crs: L.CRS.Direct
     });
+    map.addControl(new L.Control.ZoomMin())
 
     layer = L.tileLayer(opts.url, {
         attribution: opts.attribution,
