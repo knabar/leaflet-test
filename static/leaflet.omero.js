@@ -112,9 +112,52 @@ L.Marker.include({
         return null;
     };
 
-    L.Control.Draw.include({
+    L.Control.ROIDraw = L.Control.Draw.extend({
+
+        initialize: function (options) {
+            L.Control.Draw.prototype.initialize.call(this, options);
+
+            var toolbar = new L.ColorToolbar();
+            this._toolbars[L.ColorToolbar.TYPE] = toolbar;
+            this._toolbars[L.ColorToolbar.TYPE].on('enable', this._toolbarEnabled, this);
+
+            var _this = this;
+            toolbar.on('color:line', function (e) {
+                _this._setDrawingOption('linecolor', 'color', e.color);
+            });
+            toolbar.on('color:fill', function (e) {
+                _this._setDrawingOption('fillcolor', 'fillColor', e.color);
+            });
+        },
+
+        onAdd: function (map) {
+            var container = L.Control.Draw.prototype.onAdd.call(this, map);
+            this._setDrawingOption('linecolor', 'color', 'blue');
+            this._setDrawingOption('fillcolor', 'fillcolor', 'blue');
+            return container;
+        },
+
+        _setDrawingOption: function (button, option, value) {
+            for (var toolbarId in this._toolbars) {
+                if (this._toolbars[toolbarId] instanceof L.DrawToolbar) {
+                    var dt = this._toolbars[toolbarId];
+                    for (var type in dt._modes) {
+                        if (dt._modes.hasOwnProperty(type)) {
+                            var options = dt._modes[type].handler.options;
+                            options.shapeOptions = options.shapeOptions || {};
+                            options.shapeOptions[option] = value;
+                        }
+                    }
+                }
+            }
+            // TODO: introduction jQuery dependency
+            $("a.leaflet-draw-color-" + button).css("background-color", value);
+        },
 
         saveAsROI: function () {
+
+            this.options.draw.circle.shapeOptions.color = 'yellow';
+
             var output = [];
             this.options.edit.featureGroup.eachLayer(function (layer) {
                 output.push(layer.saveAsROI());
@@ -161,3 +204,89 @@ L.Marker.include({
         }
     });
 })();
+
+
+L.LineColor = L.Draw.Feature.extend({
+    statics: {
+        TYPE: 'linecolor'
+    },
+
+    initialize: function (map, options) {
+        this.type = L.LineColor.TYPE;
+        L.Draw.Feature.prototype.initialize.call(this, map, options);
+    },
+
+    eventName: 'color:line'
+});
+
+
+L.FillColor = L.Draw.Feature.extend({
+    statics: {
+        TYPE: 'fillcolor'
+    },
+
+    initialize: function (map, options) {
+        this.type = L.FillColor.TYPE;
+        L.Draw.Feature.prototype.initialize.call(this, map, options);
+    },
+
+    eventName: 'color:fill'
+});
+
+
+L.ColorToolbar = L.Toolbar.extend({
+
+    statics: {
+        TYPE: 'color'
+    },
+
+    initialize: function (options) {
+        this._toolbarClass = 'leaflet-draw-color';
+        L.Toolbar.prototype.initialize.call(this, options);
+    },
+
+    getModeHandlers: function (map) {
+        return [
+            {
+                enabled: true,
+                handler: new L.LineColor(map, this.options.line),
+                title: 'Line color'
+            },
+            {
+                enabled: true,
+                handler: new L.FillColor(map, this.options.fill),
+                title: 'Fill color'
+            },
+        ];
+    },
+
+    getActions: function (handler) {
+        var colorSetter = function (color) {
+            return function () {
+                this.fire(handler.eventName, { color: color });
+                this._activeMode.handler.disable();
+            };
+        };
+        return [
+            {
+                title: 'Red',
+                text: 'Red',
+                callback: colorSetter('red'),
+                context: this
+            },
+            {
+                title: 'Green',
+                text: 'Green',
+                callback: colorSetter('green'),
+                context: this
+            },
+            {
+                title: 'Blue',
+                text: 'Blue',
+                callback: colorSetter('blue'),
+                context: this
+            }
+        ];
+    },
+
+});
