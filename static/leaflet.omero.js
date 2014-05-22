@@ -95,11 +95,49 @@ L.Marker.include({
 
 // add save and load methods to Draw control
 
-(function () {
+L.Control.ROIDraw = L.Control.Draw.extend({
 
-    var on_draw_created = null;
+    initialize: function (options) {
+        L.Control.Draw.prototype.initialize.call(this, options);
 
-    var createShape = function (map, j) {
+        var toolbar = new L.ColorToolbar();
+        this._toolbars[L.ColorToolbar.TYPE] = toolbar;
+        this._toolbars[L.ColorToolbar.TYPE].on('enable', this._toolbarEnabled, this);
+
+        var _this = this;
+        toolbar.on('color:line', function (e) {
+            _this._setDrawingOption('linecolor', 'color', e.color);
+        });
+        toolbar.on('color:fill', function (e) {
+            _this._setDrawingOption('fillcolor', 'fillColor', e.color);
+        });
+    },
+
+    onAdd: function (map) {
+        var container = L.Control.Draw.prototype.onAdd.call(this, map);
+        this._setDrawingOption('linecolor', 'color', 'blue');
+        this._setDrawingOption('fillcolor', 'fillcolor', 'blue');
+        return container;
+    },
+
+    _setDrawingOption: function (button, option, value) {
+        for (var toolbarId in this._toolbars) {
+            if (this._toolbars[toolbarId] instanceof L.DrawToolbar) {
+                var dt = this._toolbars[toolbarId];
+                for (var type in dt._modes) {
+                    if (dt._modes.hasOwnProperty(type)) {
+                        var options = dt._modes[type].handler.options;
+                        options.shapeOptions = options.shapeOptions || {};
+                        options.shapeOptions[option] = value;
+                    }
+                }
+            }
+        }
+        // TODO: introduction jQuery dependency
+        $("a.leaflet-draw-color-" + button).css("background-color", value);
+    },
+
+    _createShape: function (map, j) {
         var unproject = function (x, y) {
             return map.unproject([x, y], map.getMaxZoom());
         };
@@ -131,100 +169,55 @@ L.Marker.include({
             // TODO
         }
         return null;
-    };
+    },
 
-    L.Control.ROIDraw = L.Control.Draw.extend({
+    saveAsROI: function () {
 
-        initialize: function (options) {
-            L.Control.Draw.prototype.initialize.call(this, options);
+        var output = [];
+        this.options.edit.featureGroup.eachLayer(function (layer) {
+            output.push(layer.saveAsROI());
+        });
+        return JSON.stringify(output);
+    },
 
-            var toolbar = new L.ColorToolbar();
-            this._toolbars[L.ColorToolbar.TYPE] = toolbar;
-            this._toolbars[L.ColorToolbar.TYPE].on('enable', this._toolbarEnabled, this);
-
-            var _this = this;
-            toolbar.on('color:line', function (e) {
-                _this._setDrawingOption('linecolor', 'color', e.color);
-            });
-            toolbar.on('color:fill', function (e) {
-                _this._setDrawingOption('fillcolor', 'fillColor', e.color);
-            });
-        },
-
-        onAdd: function (map) {
-            var container = L.Control.Draw.prototype.onAdd.call(this, map);
-            this._setDrawingOption('linecolor', 'color', 'blue');
-            this._setDrawingOption('fillcolor', 'fillcolor', 'blue');
-            return container;
-        },
-
-        _setDrawingOption: function (button, option, value) {
-            for (var toolbarId in this._toolbars) {
-                if (this._toolbars[toolbarId] instanceof L.DrawToolbar) {
-                    var dt = this._toolbars[toolbarId];
-                    for (var type in dt._modes) {
-                        if (dt._modes.hasOwnProperty(type)) {
-                            var options = dt._modes[type].handler.options;
-                            options.shapeOptions = options.shapeOptions || {};
-                            options.shapeOptions[option] = value;
-                        }
-                    }
-                }
-            }
-            // TODO: introduction jQuery dependency
-            $("a.leaflet-draw-color-" + button).css("background-color", value);
-        },
-
-        saveAsROI: function () {
-
-            this.options.draw.circle.shapeOptions.color = 'yellow';
-
-            var output = [];
-            this.options.edit.featureGroup.eachLayer(function (layer) {
-                output.push(layer.saveAsROI());
-            });
-            return JSON.stringify(output);
-        },
-
-        loadFromROI: function (json) {
-            // remove self from map if currently attached
-            if (!this._map) {
-                throw "Must be attached to a map before loading";
-            }
-            var map = this._map;
-            map.removeControl(this);
-            if (on_draw_created) {
-                map.off('draw:created', on_draw_created);
-            }
-            if (this.options.edit && this.options.edit.featureGroup) {
-                map.removeLayer(this.options.edit.featureGroup);
-            }
-
-            var shapes = JSON.parse(json);
-            var rois = $.map(shapes, function (j) {
-                return createShape(map, j);
-            });
-            this.initialize({
-                edit: {
-                    featureGroup: L.featureGroup(rois)
-                }
-            });
-            this.options.edit.featureGroup.addTo(map);
-            map.addControl(this);
-            var _this = this;
-            on_draw_created = function (event) {
-                event.layer.bindLabel('Sample Text', { noHide: true });
-                _this.options.edit.featureGroup.addLayer(event.layer);
-            };
-            map.on('draw:created', on_draw_created);
-        },
-
-        initROI: function () {
-            // shortcut function
-            this.loadFromROI('[]');
+    loadFromROI: function (json) {
+        // remove self from map if currently attached
+        if (!this._map) {
+            throw "Must be attached to a map before loading";
         }
-    });
-})();
+        var map = this._map;
+        map.removeControl(this);
+        if (this.on_draw_created) {
+            map.off('draw:created', this.on_draw_created);
+        }
+        if (this.options.edit && this.options.edit.featureGroup) {
+            map.removeLayer(this.options.edit.featureGroup);
+        }
+
+        var shapes = JSON.parse(json);
+        var rois = $.map(shapes, function (j) {
+            return this._createShape(map, j);
+        });
+        this.initialize({
+            edit: {
+                featureGroup: L.featureGroup(rois)
+            }
+        });
+        this.options.edit.featureGroup.addTo(map);
+        map.addControl(this);
+        var _this = this;
+        this.on_draw_created = function (event) {
+            event.layer.bindLabel('Sample Text', { noHide: true });
+            _this.options.edit.featureGroup.addLayer(event.layer);
+        };
+        map.on('draw:created', this.on_draw_created);
+    },
+
+    initROI: function () {
+        // shortcut function
+        this.loadFromROI('[]');
+    }
+});
 
 
 L.LineColor = L.Draw.Feature.extend({

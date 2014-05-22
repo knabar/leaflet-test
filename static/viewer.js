@@ -137,7 +137,7 @@ $(document).ready(function() {
 
     map.on('click', onMapClick);
     */
-    drawControl = new L.Control.Draw();
+    drawControl = new L.Control.ROIDraw();
     map.addControl(drawControl);
     drawControl.initROI('[]');
 
