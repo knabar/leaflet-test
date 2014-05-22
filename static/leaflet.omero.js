@@ -2,19 +2,40 @@
 
 // Save vector layers as ROI JSON
 
+L.Path.include({
+    saveFormattingAsROI: function () {
+        console.log(this.options);
+        return {
+            textValue: "",
+            fontStyle: "Normal",
+            fontFamily: "sans-serif",
+            fontSize: 12,
+            strokeWidth: this.options.weight,
+            strokeColor: this.options.color,
+            strokeAlpha: this.options.opacity,
+            fillColor: this.options.fillColor || this.options.color,
+            fillAlpha: this.options.fillOpacity,
+            transform: "none",
+            theZ: null,
+            theT: null,
+            id: null
+        };
+    }
+});
+
 L.Rectangle.include({
     saveAsROI: function () {
         var latlngs = this.getLatLngs();
         var maxZoom = this._map.getMaxZoom();
         var p1 = this._map.project(latlngs[0], maxZoom);
         var p2 = this._map.project(latlngs[2], maxZoom);
-        return {
+        return L.extend({
             type: 'Rectangle',
             x: p1.x,
             y: p1.y,
             width: p2.x - p1.x,
             height: p2.y - p1.y
-        };
+        }, this.saveFormattingAsROI());
     }
 });
 
