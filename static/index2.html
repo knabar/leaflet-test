@@ -52,14 +52,14 @@
 $(document).ready(function() {
 
     map = Viewer.initialize('map', {
-        width: 921600,
-        height: 380928,
-        minZoom: 2,
-        maxZoom: 12,
-        zoomReverse: true,
-        url: 'http://v.jcb-dataviewer.glencoesoftware.com/webclient/' +
-        'render_image_region/201/0/0/?c=1|0:255$FF0000&m=g&p=normal&ia=0&' +
-        'q=0.9&zm=100&x=0&y=0&tile={z},{x},{y},256,256'
+        width: 108,
+        height: 108,
+        minZoom: 0,
+        maxZoom: 0,
+        maxZ: 8,
+        maxT: 32,
+        url: 'http://jcb-dataviewer.rupress.org/jcb/render_image/25494/{thez}/{thet}/' +
+             '?c=1|58:438$00FF00&m=g&p=normal&ia=0&q=0.9&zm=100&x=0&y=0'
     });
 
     drawControl = new L.Control.ROIDraw();

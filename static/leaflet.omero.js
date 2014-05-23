@@ -308,3 +308,77 @@ L.ColorToolbar = L.Toolbar.extend({
     },
 
 });
+
+
+L.ROIMap = L.Map.extend({
+
+    initialize: function(id, options) {
+        var opts = L.extend({}, {
+            maxZ: 1,
+            maxT: 1,
+            Z: 0,
+            T: 0
+        }, options);
+        L.Map.prototype.initialize.call(this, id, opts);
+
+        this.roilayer = L.tileLayer(this._getROIUrl(), {
+            attribution: opts.attribution,
+            maxZoom: opts.maxZoom,
+            minZoom: opts.minZoom,
+            zoomOffset: opts.zoomOffset,
+            zoomReverse: opts.zoomReverse,
+            continuousWorld: false,
+            noWrap: true,
+            tileSize: opts.tileSize,
+            bounds: bounds
+        });
+        this.addLayer(this.roilayer);
+        this.roilayer.on('tileload', function(e) {
+            // console.log(e.tile);
+            // should refer to _getTileSize to see if we need to scale
+            // also not old IE compatible
+            $(e.tile).css('width', e.tile.naturalWidth + 'px');
+            $(e.tile).css('height', e.tile.naturalHeight + 'px');
+        });
+
+        var zslider, tslider;
+        if (opts.maxZ > 1) {
+            zslider = L.control.sliderControl({
+                minValue: 0,
+                maxValue: opts.maxZ - 1
+            });
+            this.addControl(zslider);
+            zslider.setPosition('topright');
+        }
+        if (opts.maxT > 1) {
+            tslider = L.control.sliderControl({
+                minValue: 0,
+                maxValue: opts.maxT - 1
+            });
+            this.addControl(tslider);
+            tslider.setPosition('topright');
+        }
+        this.on('slider:change', function (e) {
+            if (zslider && zslider.sliderid === e.slider.sliderid) {
+                this.setZ(e.value);
+            }
+            if (tslider && tslider.sliderid === e.slider.sliderid) {
+                this.setT(e.value);
+            }
+        });
+    },
+
+    _getROIUrl: function () {
+        return this.options.url.replace('{thez}', this.options.Z).replace('{thet}', this.options.T);
+    },
+
+    setT: function (index) {
+        this.options.T = index;
+        this.roilayer.setUrl(this._getROIUrl());
+    },
+
+    setZ: function (index) {
+        this.options.Z = index;
+        this.roilayer.setUrl(this._getROIUrl());
+    },
+});

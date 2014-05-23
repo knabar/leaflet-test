@@ -33,10 +33,14 @@ Viewer.initialize = function (id, options) {
         minZoom: 0,
         maxZoom: 0,
         zoomOffset: 0,
-        zoomReverse: false
+        zoomReverse: false,
+        maxT: 1,
+        maxZ: 1,
+        T: 0,
+        Z: 0
     };
-    var opts = $.extend({}, defaults, options);
-
+    var opts = L.extend({}, defaults, options);
+    console.log('Viewer', options, opts);
     var zoomrange = opts.maxZoom - opts.minZoom;
     var ratio = opts.width / opts.height;
     // calculate correction in x and y direction, since image does not
@@ -55,52 +59,40 @@ Viewer.initialize = function (id, options) {
     var sw = new L.LatLng(1, 0);
     bounds = new L.LatLngBounds(ne, sw);
     
-    map = L.map(id, {
+    map = new L.ROIMap(id, {
         minZoom: opts.minZoom,
         maxZoom: opts.maxZoom, 
         tileSize: opts.tileSize,
         center: bounds.getCenter(),
         zoom: opts.minZoom,
+        zoomReverse: opts.zoomReverse,
+        zoomOffset: opts.zoomOffset,
         zoomControl: false,
         fullscreenControl: true,
         fullscreenControlOptions: {
             position: 'topleft'
         },
-        crs: L.CRS.Direct
+        crs: L.CRS.Direct,
+        T: opts.T,
+        Z: opts.Z,
+        maxT: opts.maxT,
+        maxZ: opts.maxZ,
+        url: opts.url
     });
     map.addControl(new L.Control.ZoomMin())
 
-    layer = L.tileLayer(opts.url, {
-        attribution: opts.attribution,
-        maxZoom: opts.maxZoom,
-        minZoom: opts.minZoom,
-        zoomOffset: opts.zoomOffset,
-        zoomReverse: opts.zoomReverse,
-        continuousWorld: false,
-        noWrap: true,
-        tileSize: opts.tileSize,
-        bounds: bounds
-    });
-    map.addLayer(layer);
-    layer.on('tileload', function(e) {
-        // console.log(e.tile);
-        // should refer to _getTileSize to see if we need to scale
-        // also not old IE compatible
-        $(e.tile).css('width', e.tile.naturalWidth + 'px');
-        $(e.tile).css('height', e.tile.naturalHeight + 'px');
-
-    });
-
-    var minilayer = L.tileLayer(opts.url, {
-        maxZoom: opts.maxZoom,
-        minZoom: opts.minZoom,
-        zoomOffset: opts.zoomOffset,
-        zoomReverse: opts.zoomReverse,
-        continuousWorld: false,
-        noWrap: true,
-        tileSize: opts.tileSize,
-        bounds: bounds
-    });
-    var miniMap = new L.Control.MiniMap(minilayer).addTo(map);
+    if (opts.minZoom !== opts.maxZoom) {
+        var minilayer = L.tileLayer(opts.url, {
+            maxZoom: opts.maxZoom,
+            minZoom: opts.minZoom,
+            zoomOffset: opts.zoomOffset,
+            zoomReverse: opts.zoomReverse,
+            continuousWorld: false,
+            noWrap: true,
+            tileSize: opts.tileSize,
+            bounds: bounds
+        });
+        var miniMap = new L.Control.MiniMap(minilayer).addTo(map);
+    }
     return map;
 };
