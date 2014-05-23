@@ -7,8 +7,6 @@
 var map;
 var layer;
 var bounds;
-var width = 921600;
-var height = 380928;
 
 var fabricCanvas;
 
@@ -106,47 +104,3 @@ Viewer.initialize = function (id, options) {
     var miniMap = new L.Control.MiniMap(minilayer).addTo(map);
     return map;
 };
-
-
-$(document).ready(function() {
-
-    map = Viewer.initialize('map', {
-        width: 921600,
-        height: 380928,
-        minZoom: 2,
-        maxZoom: 12,
-        zoomReverse: true,
-        url: 'http://v.jcb-dataviewer.glencoesoftware.com/webclient/' +
-        'render_image_region/201/0/0/?c=1|0:255$FF0000&m=g&p=normal&ia=0&' +
-        'q=0.9&zm=100&x=0&y=0&tile={z},{x},{y},256,256'
-    });
-    /* 
-    // add popup to get coordinates
-    var popup = L.popup();
-
-    function onMapClick(e) {
-        popup
-            .setLatLng(e.latlng)
-            .setContent(
-                "You clicked the map at " + 
-                e.latlng.toString() + 
-                " which equals " + 
-                map.project(e.latlng, map.getMaxZoom()))
-            .openOn(map);
-    }
-
-    map.on('click', onMapClick);
-    */
-    drawControl = new L.Control.ROIDraw();
-    map.addControl(drawControl);
-    drawControl.initROI('[]');
-
-    $("#list-shapes").on('click', function () {
-        $("#shapes").text(drawControl.saveAsROI());
-    });
-
-    $("#load-shapes").on('click', function () {
-        drawControl.loadFromROI($("#shapes").text());
-        return;
-    });
-});
