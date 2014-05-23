@@ -141,12 +141,13 @@ L.Control.ROIDraw = L.Control.Draw.extend({
         var unproject = function (x, y) {
             return map.unproject([x, y], map.getMaxZoom());
         };
+        var shape = null;
         if (j.type === "Rectangle") {
-            return L.rectangle([unproject(j.x, j.y),
+            shape = L.rectangle([unproject(j.x, j.y),
                 unproject(j.x + j.width, j.y + j.height)]);
         }
         if (j.type === "Point") {
-            return L.marker(unproject(j.cx, j.cy));
+            shape = L.marker(unproject(j.cx, j.cy));
         }
         if (j.type === "Ellipse") {
             // TODO: only restores circle right now
@@ -154,7 +155,7 @@ L.Control.ROIDraw = L.Control.Draw.extend({
             console.log("Warning: restoring ellipse as circle");
             // radius needs to be in meters, so another dirty hack
             r = r.lng * 111319.9;
-            return L.circle(unproject(j.cx, j.cy), r);
+            shape = L.circle(unproject(j.cx, j.cy), r);
         }
         if (j.type === "Polygon") {
             var x = /[LM] ([\d.]+) ([\d.]+)/g;
@@ -163,12 +164,15 @@ L.Control.ROIDraw = L.Control.Draw.extend({
                 points.push(unproject(parseFloat(result[1], 10),
                             parseFloat(result[2], 10)));
             }
-            return L.polygon(points);
+            shape = L.polygon(points);
         }
         if (j.type === "Polyline") {
             // TODO
         }
-        return null;
+        if (shape) {
+            // TODO: load shape formatting here
+        }
+        return shape;
     },
 
     saveAsROI: function () {
