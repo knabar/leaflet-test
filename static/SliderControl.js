@@ -1,5 +1,7 @@
 L.Control.SliderControl = L.Control.extend({
     options: {
+        orientation: 'horizontal',
+        label: '',
         position: 'topright',
         maxValue: -1,
         minValue: -1,
@@ -29,18 +31,22 @@ L.Control.SliderControl = L.Control.extend({
 
     onAdd: function (map) {
         this.options.map = map;
+        var style;
+        if (this.options.orientation === 'vertical') {
+            style = 'height:200px';
+        } else {
+            style = 'width:200px';
+        }
 
         // Create a control sliderContainer with a jquery ui slider
         var sliderContainer = L.DomUtil.create('div', 'slider', this._container);
-        $(sliderContainer).append('<div id="leaflet-slider' + this.sliderid + '" style="width:200px"><div class="ui-slider-handle"></div><div id="slider-timestamp" style="width:200px; margin-top:10px;background-color:#FFFFFF"></div></div>');
+        $(sliderContainer).append('<div id="leaflet-slider' + this.sliderid + '" style="' + style + '"><div style="text-align: center;" class="ui-slider-handle">' + this.options.label + '</div></div>');
         //Prevent map panning/zooming while using the slider
         $(sliderContainer).mousedown(function () {
             map.dragging.disable();
         });
         $(document).mouseup(function () {
             map.dragging.enable();
-            //Only show the slider timestamp while using the slider
-            $('#slider-timestamp').html('');
         });
 
         var options = this.options;
@@ -55,12 +61,14 @@ L.Control.SliderControl = L.Control.extend({
 
     startSlider: function () {
         _options = this.options;
-        _this = this;
+        var _this = this;
+        console.log('starting slider', this.sliderid);
         $("#leaflet-slider" + this.sliderid).slider({
             range: _options.range,
             value: _options.minValue,
             min: _options.minValue,
             max: _options.maxValue,
+            orientation: _options.orientation,
             step: 1,
             slide: function (e, ui) {
                 var map = _options.map;

@@ -312,6 +312,27 @@ L.ColorToolbar = L.Toolbar.extend({
 
 L.ROIMap = L.Map.extend({
 
+    _getTileLayer: function (url) {
+        var layer = L.tileLayer(url, {
+            attribution: this.options.attribution,
+            maxZoom: this.options.maxZoom,
+            minZoom: this.options.minZoom,
+            zoomOffset: this.options.zoomOffset,
+            zoomReverse: this.options.zoomReverse,
+            continuousWorld: false,
+            noWrap: true,
+            tileSize: this.options.tileSize,
+            bounds: new L.LatLngBounds(new L.LatLng(0, 1), new L.LatLng(1, 0))
+        });
+        layer.on('tileload', function(e) {
+            // console.log(e.tile);
+            // should refer to _getTileSize to see if we need to scale
+            // also not old IE compatible
+            $(e.tile).css('width', e.tile.naturalWidth + 'px');
+            $(e.tile).css('height', e.tile.naturalHeight + 'px');
+        });
+        return layer;
+    },
     initialize: function(id, options) {
         var opts = L.extend({}, {
             maxZ: 1,
@@ -321,64 +342,73 @@ L.ROIMap = L.Map.extend({
         }, options);
         L.Map.prototype.initialize.call(this, id, opts);
 
-        this.roilayer = L.tileLayer(this._getROIUrl(), {
-            attribution: opts.attribution,
-            maxZoom: opts.maxZoom,
-            minZoom: opts.minZoom,
-            zoomOffset: opts.zoomOffset,
-            zoomReverse: opts.zoomReverse,
-            continuousWorld: false,
-            noWrap: true,
-            tileSize: opts.tileSize,
-            bounds: bounds
-        });
+        this.roilayer = this._getTileLayer(this._getROIUrl());
         this.addLayer(this.roilayer);
-        this.roilayer.on('tileload', function(e) {
-            // console.log(e.tile);
-            // should refer to _getTileSize to see if we need to scale
-            // also not old IE compatible
-            $(e.tile).css('width', e.tile.naturalWidth + 'px');
-            $(e.tile).css('height', e.tile.naturalHeight + 'px');
-        });
 
         var zslider, tslider;
-        if (opts.maxZ > 1) {
-            zslider = L.control.sliderControl({
-                minValue: 0,
-                maxValue: opts.maxZ - 1
-            });
-            this.addControl(zslider);
-            zslider.setPosition('topright');
-        }
         if (opts.maxT > 1) {
             tslider = L.control.sliderControl({
+                label: 'T',
                 minValue: 0,
                 maxValue: opts.maxT - 1
             });
             this.addControl(tslider);
             tslider.setPosition('topright');
         }
+        if (opts.maxZ > 1) {
+            zslider = L.control.sliderControl({
+                label: 'Z',
+                orientation: 'vertical',
+                minValue: 0,
+                maxValue: opts.maxZ - 1
+            });
+            this.addControl(zslider);
+            zslider.setPosition('topright');
+        }
         this.on('slider:change', function (e) {
             if (zslider && zslider.sliderid === e.slider.sliderid) {
+                console.log('setting z',zslider.sliderid,e.slider.sliderid);
                 this.setZ(e.value);
             }
             if (tslider && tslider.sliderid === e.slider.sliderid) {
+                console.log('setting t',tslider.sliderid,e.slider.sliderid);
                 this.setT(e.value);
             }
         });
     },
 
     _getROIUrl: function () {
-        return this.options.url.replace('{thez}', this.options.Z).replace('{thet}', this.options.T);
+        return this.options.url.replace(
+            '{thez}', this.options.Z
+        ).replace(
+            '{thet}', this.options.T
+        );
     },
 
     setT: function (index) {
         this.options.T = index;
-        this.roilayer.setUrl(this._getROIUrl());
+        this._updateTZ();
     },
 
     setZ: function (index) {
         this.options.Z = index;
-        this.roilayer.setUrl(this._getROIUrl());
+        this._updateTZ();
     },
+
+    _updateTZ: function () {
+        var _this = this;
+        if (this.__tzTimer) {
+            clearTimeout(this.__tzTimer);
+        }
+        this.__tzTimer = setTimeout(function () {
+            _this.__tzTimer = null;
+            var layer = _this.roilayer;
+            _this._roilayer = _this._getTileLayer(_this._getROIUrl());
+            var onload = function (event) {
+                _this._roilayer.off('load', onload);
+                _this.removeLayer(layer);
+            };
+            _this._roilayer.on('load', onload).addTo(_this);
+        }, 100);
+    }
 });
