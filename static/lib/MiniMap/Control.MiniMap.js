@@ -10,7 +10,8 @@ L.Control.MiniMap = L.Control.extend({
 		height: 150,
 		aimingRectOptions: {color: "#ff7800", weight: 1, clickable: false},
 		shadowRectOptions: {color: "#000000", weight: 1, clickable: false, opacity:0, fillOpacity:0},
-        dragging: true
+        dragging: true,
+        crs: null
 	},
 	
 	hideText: 'Hide MiniMap',
@@ -48,7 +49,7 @@ L.Control.MiniMap = L.Control.extend({
 			scrollWheelZoom: !this.options.zoomLevelFixed,
 			doubleClickZoom: !this.options.zoomLevelFixed,
 			boxZoom: !this.options.zoomLevelFixed,
-			crs: map.options.crs,
+			crs: this.options.crs || map.options.crs,
             dragging: this.options.dragging
 		});
 
@@ -175,6 +176,7 @@ L.Control.MiniMap = L.Control.extend({
 			this._miniMapMoving = false;
 		}
 */		this._aimingRect.setBounds(this._mainMap.getBounds());
+//        console.log(this._mainMap.getBounds());
 	},
 
 	_onMainMapMoving: function (e) {

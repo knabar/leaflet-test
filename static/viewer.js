@@ -82,7 +82,7 @@ Viewer.initialize = function (id, options) {
     map.addControl(new L.Control.ZoomMin())
 
     if (opts.minZoom !== opts.maxZoom) {
-        var minilayer = L.tileLayer('fish-overview.png', {
+        var minilayer = L.tileLayer('http://v.jcb-dataviewer.glencoesoftware.com/webclient/render_birds_eye_view/201/256/', {
             maxZoom: 0,
             minZoom: 0,
             zoomOffset: 0,
@@ -93,16 +93,35 @@ Viewer.initialize = function (id, options) {
             bounds: bounds,
             center: bounds.getCenter()
         });
+        minilayer.on('tileload', function(e) {
+            // console.log(e.tile);
+            // should refer to _getTileSize to see if we need to scale
+            // also not old IE compatible
+            $(e.tile).css('width', e.tile.naturalWidth + 'px');
+            $(e.tile).css('height', e.tile.naturalHeight + 'px');
+        });
+        L.CRS.DirectMiniMap = L.Util.extend({}, L.CRS, {
+            code: 'Direct',
+            projection: L.Projection.NoWrap,
+            transformation: new L.Transformation(1, 0, 1 / ratio, 0)
+        });
         var miniMap = new L.Control.MiniMap(minilayer, {
             zoomLevelFixed: opts.zoomReverse ? opts.minZoom : opts.maxZoom,
             toggleDisplay: true,
-            width: 256 + 20,
-            height: 256 * 376 / 900 + 20,
+            width: 256,
+            height: 256 * 376 / 900,
             aimingRectOptions: {
                 weight: 5
             },
-            dragging: false
+            dragging: false,
+            crs: L.CRS.DirectMiniMap
         }).addTo(map);
     }
+//    map.on('click', function(e) {
+//        console.log('map', e.latlng);
+//    });
+
+
+
     return map;
 };
