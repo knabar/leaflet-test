@@ -35,8 +35,11 @@ L.Control.MiniMap = L.Control.extend({
 		this._container = L.DomUtil.create('div', 'leaflet-control-minimap');
 		this._container.style.width = this.options.width + 'px';
 		this._container.style.height = this.options.height + 'px';
-		L.DomEvent.disableClickPropagation(this._container);
+//		L.DomEvent.disableClickPropagation(this._container);
 		L.DomEvent.on(this._container, 'mousewheel', L.DomEvent.stopPropagation);
+		L.DomEvent.on(this._container, 'doubleclick', L.DomEvent.stopPropagation);
+		L.DomEvent.on(this._container, 'mousedown', L.DomEvent.stopPropagation);
+		L.DomEvent.on(this._container, 'touchstart', L.DomEvent.stopPropagation);
 
 
 		this._miniMap = new L.Map(this._container,
@@ -53,6 +56,7 @@ L.Control.MiniMap = L.Control.extend({
             dragging: this.options.dragging
 		});
 
+
 		this._miniMap.addLayer(this._layer);
 
 		//These bools are used to prevent infinite loops of the two maps notifying each other that they've moved.
@@ -68,6 +72,10 @@ L.Control.MiniMap = L.Control.extend({
 		}
 
 		this._miniMap.whenReady(L.Util.bind(function () {
+            this._miniMap.on('click', function (event) {
+                this._mainMap.setView(event.latlng);
+                L.DomEvent.stopPropagation(event);
+            }, this);
 			this._aimingRect = L.rectangle(this._mainMap.getBounds(), this.options.aimingRectOptions).addTo(this._miniMap);
 			this._shadowRect = L.rectangle(this._mainMap.getBounds(), this.options.shadowRectOptions).addTo(this._miniMap);
 			this._mainMap.on('moveend', this._onMainMapMoved, this);

@@ -117,11 +117,6 @@ Viewer.initialize = function (id, options) {
             crs: L.CRS.DirectMiniMap
         }).addTo(map);
     }
-//    map.on('click', function(e) {
-//        console.log('map', e.latlng);
-//    });
-
-
 
     return map;
 };
