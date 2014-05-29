@@ -4,7 +4,6 @@
 
 L.Path.include({
     saveFormattingAsROI: function () {
-        console.log(this.options);
         return {
             textValue: "",
             fontStyle: "Normal",
@@ -367,11 +366,9 @@ L.ROIMap = L.Map.extend({
         }
         this.on('slider:change', function (e) {
             if (zslider && zslider.sliderid === e.slider.sliderid) {
-                console.log('setting z',zslider.sliderid,e.slider.sliderid);
                 this.setZ(e.value);
             }
             if (tslider && tslider.sliderid === e.slider.sliderid) {
-                console.log('setting t',tslider.sliderid,e.slider.sliderid);
                 this.setT(e.value);
             }
         });

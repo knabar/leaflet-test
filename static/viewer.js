@@ -82,17 +82,27 @@ Viewer.initialize = function (id, options) {
     map.addControl(new L.Control.ZoomMin())
 
     if (opts.minZoom !== opts.maxZoom) {
-        var minilayer = L.tileLayer(opts.url, {
-            maxZoom: opts.maxZoom,
-            minZoom: opts.minZoom,
-            zoomOffset: opts.zoomOffset,
-            zoomReverse: opts.zoomReverse,
+        var minilayer = L.tileLayer('fish-overview.png', {
+            maxZoom: 0,
+            minZoom: 0,
+            zoomOffset: 0,
+            zoomReverse: false,
             continuousWorld: false,
             noWrap: true,
-            tileSize: opts.tileSize,
-            bounds: bounds
+            tileSize: 256,
+            bounds: bounds,
+            center: bounds.getCenter()
         });
-        var miniMap = new L.Control.MiniMap(minilayer).addTo(map);
+        var miniMap = new L.Control.MiniMap(minilayer, {
+            zoomLevelFixed: opts.zoomReverse ? opts.minZoom : opts.maxZoom,
+            toggleDisplay: true,
+            width: 256 + 20,
+            height: 256 * 376 / 900 + 20,
+            aimingRectOptions: {
+                weight: 5
+            },
+            dragging: false
+        }).addTo(map);
     }
     return map;
 };
