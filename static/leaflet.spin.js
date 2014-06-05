@@ -27,14 +27,9 @@ L.Map.addInitHook(function () {
     this._layersSpinning = {};
     this._spinEvents = {};
     this._spinLayer = function (layerid, spin) {
-        if (spin && this._layersSpinning[layerid]) return;
-        if (!spin && !this._layersSpinning[layerid]) return;
-        if (spin) {
-            this._layersSpinning[layerid] = true;
-            this.spin(true);
-        } else {
-            this._layersSpinning[layerid] = false;
-            this.spin(false);
+        if (spin !== !!this._layersSpinning[layerid]) {
+            this._layersSpinning[layerid] = spin;
+            this.spin(spin);
         }
     };
     this.on('layeradd', function (e) {
