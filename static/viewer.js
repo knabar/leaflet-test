@@ -60,6 +60,7 @@ Viewer.initialize = function (id, options) {
     bounds = new L.LatLngBounds(ne, sw);
     
     map = new L.ROIMap(id, {
+        attributionControl: opts.attributionControl,
         minZoom: opts.minZoom,
         maxZoom: opts.maxZoom, 
         tileSize: opts.tileSize,

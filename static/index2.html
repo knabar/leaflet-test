@@ -34,9 +34,6 @@
             height: 600px;
             width: 1200px;
         }
-        .leaflet-control-attribution {
-            display: none;
-        }
         a.leaflet-draw-color-linecolor,
         a.leaflet-draw-color-linecolor:hover {
             /* TODO: should set the background color on initialization */
@@ -60,6 +57,7 @@ $(document).ready(function() {
         maxZoom: 0,
         maxZ: 8,
         maxT: 32,
+        attributionControl: false,
         url: 'http://dev.jcb-dataviewer.glencoesoftware.com/jcb/render_image/25494/{thez}/{thet}/' +
              '?c=1|58:438$00FF00&m=g&p=normal&ia=0&q=0.9&zm=100&x=0&y=0'
     });
