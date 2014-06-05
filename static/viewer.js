@@ -83,7 +83,7 @@ Viewer.initialize = function (id, options) {
     map.addControl(new L.Control.ZoomMin())
 
     if (opts.minZoom !== opts.maxZoom) {
-        var minilayer = L.tileLayer('http://v.jcb-dataviewer.glencoesoftware.com/webclient/render_birds_eye_view/201/256/', {
+        var minilayer = L.tileLayer(opts.miniUrl, {
             maxZoom: 0,
             minZoom: 0,
             zoomOffset: 0,
@@ -109,10 +109,10 @@ Viewer.initialize = function (id, options) {
         var miniMap = new L.Control.MiniMap(minilayer, {
             zoomLevelFixed: opts.zoomReverse ? opts.minZoom : opts.maxZoom,
             toggleDisplay: true,
-            width: 256,
-            height: 256 * 376 / 900,
+            width: Math.min(256, 256 * ratio),
+            height: Math.min(256, 256 / ratio),
             aimingRectOptions: {
-                weight: 5
+                weight: 4
             },
             dragging: false,
             crs: L.CRS.DirectMiniMap

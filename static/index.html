@@ -59,7 +59,8 @@ $(document).ready(function() {
         attributionControl: false,
         url: 'http://v.jcb-dataviewer.glencoesoftware.com/webclient/' +
         'render_image_region/201/0/0/?c=1|0:255$FF0000&m=g&p=normal&ia=0&' +
-        'q=0.9&zm=100&x=0&y=0&tile={z},{x},{y},256,256'
+        'q=0.9&zm=100&x=0&y=0&tile={z},{x},{y},256,256',
+        miniUrl: 'http://v.jcb-dataviewer.glencoesoftware.com/webclient/render_birds_eye_view/201/256/'
     });
 
     drawControl = new L.Control.ROIDraw();
