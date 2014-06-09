@@ -75,6 +75,17 @@ $(document).ready(function() {
         drawControl.loadFromROI($("#shapes").text());
         return;
     });
+
+    $("#create-shapes").on('click', function() {
+        var group = L.featureGroup();
+        for (var i = 0; i < 1000; i++) {
+            var c = L.circle([Math.random(), Math.random()], Math.random() * 100);
+            c.addTo(group);
+        }
+        group.addTo(map);
+    });
+
+    L.control.scale().addTo(map);
 });
     </script>
 </head>
@@ -86,6 +97,7 @@ $(document).ready(function() {
     <div>
         <button id="list-shapes">List shapes</button>
         <button id="load-shapes">Load shapes</button>
+        <button id="create-shapes">Create 1,000 shapes</button>
     </div>
 
     <textarea id="shapes" style="width: 900px; height: 200px;">
